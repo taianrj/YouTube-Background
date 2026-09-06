@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>WinExe</OutputType><TargetFramework>net10.0-windows</TargetFramework><UseWindowsForms>true</UseWindowsForms><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><AssemblyName>YouTubeBackground</AssemblyName></PropertyGroup>
+  <PropertyGroup><Version>1.2.0</Version><ApplicationIcon>../../assets/app.ico</ApplicationIcon></PropertyGroup>
+  <ItemGroup><EmbeddedResource Include="../../assets/app.ico" LogicalName="YouTubeBackground.app.ico" /></ItemGroup>
+  <ItemGroup><InternalsVisibleTo Include="InputTests" /></ItemGroup>
+  <ItemGroup><InternalsVisibleTo Include="TrayTests" /></ItemGroup>
+  <ItemGroup><Compile Include="../Shared/Protocol.cs" Link="Protocol.cs" /></ItemGroup>
+</Project>
