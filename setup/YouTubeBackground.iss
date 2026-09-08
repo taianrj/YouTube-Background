@@ -1,4 +1,4 @@
-#define AppVersion "1.2.0"
+#define AppVersion "1.2.3"
 #ifndef ReleaseDir
   #define ReleaseDir "..\dist"
 #endif
@@ -21,7 +21,7 @@ WizardImageFile=..\assets\wizard.bmp
 WizardSmallImageFile=..\assets\wizard-small.bmp
 UninstallDisplayIcon={app}\app\YouTubeBackground.exe
 OutputDir={#ReleaseDir}
-OutputBaseFilename=YouTube-Background-Instalador-v1.2.0
+OutputBaseFilename=YouTube-Background-Instalador-v{#AppVersion}
 Compression=lzma2
 SolidCompression=yes
 CloseApplications=yes
@@ -29,21 +29,24 @@ RestartApplications=no
 DisableWelcomePage=no
 DisableFinishedPage=no
 SetupLogging=yes
+LanguageDetectionMethod=uilanguage
+ShowLanguageDialog=no
+UsePreviousLanguage=no
 
 [Languages]
-Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
-
-[Messages]
-WelcomeLabel1=Controle o YouTube de qualquer janela
-WelcomeLabel2=Este assistente vai instalar o YouTube Background e mostrar como conectar a extensão ao Chrome e gravar seus atalhos.%n%nVocê não precisa extrair arquivos nem instalar o .NET.%n%nA extensão é adicionada manualmente ao Chrome em uma etapa guiada após a instalação.
-FinishedLabel=O aplicativo foi instalado.%n%nSe ainda não carregou a extensão, siga o Guia de instalação no menu Iniciar. Depois, reproduza um vídeo no YouTube e teste seus atalhos em outra janela.%n%nO ícone vermelho com duas setas fica perto do relógio, inclusive na lista de ícones ocultos.
+; English must remain first: Inno Setup uses it when the Windows UI language has no match.
+Name: "english"; MessagesFile: "compiler:Default.isl,messages\english.isl"
+Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl,messages\brazilianportuguese.isl"
+Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl,messages\spanish.isl"
 
 [Files]
 Source: "..\package\app\YouTubeBackground.exe"; DestDir: "{app}\app"; Flags: ignoreversion
 Source: "..\package\host\YouTubeBackground.Host.exe"; DestDir: "{app}\host"; Flags: ignoreversion
 Source: "..\extension\*"; DestDir: "{app}\extension"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\assets\app.ico"; DestDir: "{app}"; Flags: ignoreversion
-Source: "guide.html"; DestDir: "{app}"; Flags: ignoreversion
+Source: "guide.en.html"; DestDir: "{app}"; DestName: "guide.html"; Languages: english; Flags: ignoreversion
+Source: "guide.html"; DestDir: "{app}"; Languages: brazilianportuguese; Flags: ignoreversion
+Source: "guide.es.html"; DestDir: "{app}"; DestName: "guide.html"; Languages: spanish; Flags: ignoreversion
 Source: "stop-app.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "stop-app.ps1"; Flags: dontcopy
 
@@ -53,7 +56,13 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 
 [Icons]
 Name: "{userprograms}\YouTube Background"; Filename: "{app}\app\YouTubeBackground.exe"; Parameters: "--settings"; IconFilename: "{app}\app.ico"
-Name: "{userprograms}\YouTube Background - Guia de instalação"; Filename: "{app}\guide.html"; IconFilename: "{app}\app.ico"
+Name: "{userprograms}\YouTube Background - {cm:GuideShortcut}"; Filename: "{app}\guide.html"; IconFilename: "{app}\app.ico"
+
+[InstallDelete]
+; Remove only our former guide shortcuts when an update changes language.
+Type: files; Name: "{userprograms}\YouTube Background - Guia de instalação.lnk"
+Type: files; Name: "{userprograms}\YouTube Background - Installation guide.lnk"
+Type: files; Name: "{userprograms}\YouTube Background - Guía de instalación.lnk"
 
 [UninstallRun]
 Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\stop-app.ps1"" -InstallRoot ""{app}"""; Flags: runhidden waituntilterminated; RunOnceId: "StopYouTubeBackground"
@@ -117,16 +126,16 @@ begin
   if not FileExists(Chrome) then Chrome := ExpandConstant('{pf32}\Google\Chrome\Application\chrome.exe');
   if not FileExists(Chrome) then Chrome := ExpandConstant('{localappdata}\Google\Chrome\Application\chrome.exe');
   if not FileExists(Chrome) then
-    MsgBox('Abra o Google Chrome e digite chrome://extensions na barra de endereços.', mbInformation, MB_OK)
+    MsgBox(CustomMessage('OpenChromeManually'), mbInformation, MB_OK)
   else if not Exec(Chrome, 'chrome://extensions/', '', SW_SHOWNORMAL, ewNoWait, Code) then
-    MsgBox('No Chrome, digite chrome://extensions na barra de endereços.', mbInformation, MB_OK);
+    MsgBox(CustomMessage('OpenChromeManually'), mbInformation, MB_OK);
 end;
 
 procedure OpenSettings(Sender: TObject);
 var Code: Integer;
 begin
   if not Exec(ExpandConstant('{app}\app\YouTubeBackground.exe'), '--settings', '', SW_SHOWNORMAL, ewNoWait, Code) then
-    MsgBox('Abra YouTube Background pelo menu Iniciar para configurar os atalhos.', mbInformation, MB_OK);
+    MsgBox(CustomMessage('OpenSettingsManually'), mbInformation, MB_OK);
 end;
 
 procedure AddButton(Page: TWizardPage; Left, Top, Width: Integer; Text: String; Handler: TNotifyEvent);
@@ -139,30 +148,22 @@ end;
 
 procedure InitializeWizard;
 begin
-  ChromePage := CreateCustomPage(wpInstalling, 'Conecte ao Chrome', 'Etapa 1 de 2: adicione a extensão do YouTube Background');
-  LabelOnPage(ChromePage, 0, '1. Abra chrome://extensions e ative Modo do desenvolvedor.' + #13#10 +
-    '2. Clique em Carregar sem compactação.' + #13#10 +
-    '3. Selecione a pasta abaixo. Você pode colar o caminho no seletor.' + #13#10 +
-    '4. Recarregue as abas do YouTube que já estavam abertas.');
+  ChromePage := CreateCustomPage(wpInstalling, CustomMessage('ChromeTitle'), CustomMessage('ChromeSubtitle'));
+  LabelOnPage(ChromePage, 0, CustomMessage('ChromeSteps'));
   FolderEdit := TNewEdit.Create(ChromePage);
   FolderEdit.Parent := ChromePage.Surface; FolderEdit.Left := 0; FolderEdit.Top := ScaleY(91);
   FolderEdit.Width := ChromePage.SurfaceWidth; FolderEdit.ReadOnly := True;
   FolderEdit.Text := ExpandConstant('{localappdata}\YouTubeBackground\extension');
-  AddButton(ChromePage, 0, 125, 150, 'Abrir Chrome', @OpenChrome);
-  AddButton(ChromePage, 160, 125, 150, 'Copiar caminho', @CopyFolder);
-  AddButton(ChromePage, 320, 125, 140, 'Abrir pasta', @OpenFolder);
-  LabelOnPage(ChromePage, 172, 'Já instalou a extensão em uma versão anterior? Mantenha a mesma extensão.' + #13#10#13#10 +
-    'Você pode fazer isso agora ou continuar e usar o guia no menu Iniciar depois. O controle do vídeo só funciona após adicionar a extensão.');
+  AddButton(ChromePage, 0, 125, 150, CustomMessage('OpenChrome'), @OpenChrome);
+  AddButton(ChromePage, 160, 125, 150, CustomMessage('CopyPath'), @CopyFolder);
+  AddButton(ChromePage, 320, 125, 140, CustomMessage('OpenFolder'), @OpenFolder);
+  LabelOnPage(ChromePage, 172, CustomMessage('ChromeNote'));
 
-  KeysPage := CreateCustomPage(ChromePage.ID, 'Escolha seus atalhos', 'Etapa 2 de 2: configure e teste sem sair do assistente');
-  LabelOnPage(KeysPage, 0, 'Os padrões são Ctrl + Alt + seta esquerda/direita, com saltos de 5 segundos.' + #13#10#13#10 +
-    '1. Clique em Abrir configurações.' + #13#10 +
-    '2. Clique em Gravar ao lado de Retroceder ou Avançar.');
-  LabelOnPage(KeysPage, 88, '3. Pressione uma tecla/combinação ou gire o controle do teclado.' + #13#10 +
-    '4. Ajuste os segundos e clique em Salvar.');
-  AddButton(KeysPage, 0, 145, 205, 'Abrir configurações', @OpenSettings);
-  LabelOnPage(KeysPage, 188, 'Se o controle enviar Volume +/−, ele passa a controlar o vídeo enquanto os atalhos estiverem ativos. Suspender atalhos devolve a função de volume.' + #13#10#13#10 +
-    'Para testar: reproduza um vídeo, abra outra janela e use o atalho.');
+  KeysPage := CreateCustomPage(ChromePage.ID, CustomMessage('KeysTitle'), CustomMessage('KeysSubtitle'));
+  LabelOnPage(KeysPage, 0, CustomMessage('KeysSteps1'));
+  LabelOnPage(KeysPage, 88, CustomMessage('KeysSteps2'));
+  AddButton(KeysPage, 0, 145, 205, CustomMessage('OpenSettings'), @OpenSettings);
+  LabelOnPage(KeysPage, 188, CustomMessage('KeysNote'));
 end;
 
 function PrepareToInstall(var NeedsRestart: Boolean): String;
@@ -172,8 +173,8 @@ begin
   ExtractTemporaryFile('stop-app.ps1');
   if not Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
     '-NoProfile -ExecutionPolicy Bypass -File "' + ExpandConstant('{tmp}\stop-app.ps1') + '" -InstallRoot "' + ExpandConstant('{app}') + '"',
-    '', SW_HIDE, ewWaitUntilTerminated, Code) then Result := 'Não foi possível encerrar o aplicativo anterior.'
-  else if Code <> 0 then Result := 'Feche o YouTube Background e tente instalar novamente.';
+    '', SW_HIDE, ewWaitUntilTerminated, Code) then Result := CustomMessage('StopFailed')
+  else if Code <> 0 then Result := CustomMessage('CloseBeforeInstall');
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
@@ -191,10 +192,10 @@ begin
     Lines[5] := '"allowed_origins":["chrome-extension://jobnoaknnkhgmfjfbfkelbpfgabdogfb/"]';
     Lines[6] := '}';
     if not SaveStringsToUTF8FileWithoutBOM(ExpandConstant('{app}\native-host.json'), Lines, False) then
-      RaiseException('Não foi possível configurar a conexão com o Chrome. Execute o instalador novamente.');
+      RaiseException(CustomMessage('HostSetupFailed'));
     if not WizardSilent then begin
       Started := Exec(ExpandConstant('{app}\app\YouTubeBackground.exe'), '', '', SW_HIDE, ewNoWait, Code);
-      if not Started then MsgBox('O aplicativo foi instalado. Abra YouTube Background pelo menu Iniciar.', mbInformation, MB_OK);
+      if not Started then MsgBox(CustomMessage('StartManually'), mbInformation, MB_OK);
     end;
   end;
 end;
@@ -208,7 +209,6 @@ procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
   if CurUninstallStep = usPostUninstall then begin
     RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'YouTubeBackground');
-    if not UninstallSilent then MsgBox('Aplicativo removido. Remova também a extensão em chrome://extensions.' + #13#10 +
-      'Suas preferências foram preservadas para uma futura reinstalação.', mbInformation, MB_OK);
+    if not UninstallSilent then MsgBox(CustomMessage('Uninstalled'), mbInformation, MB_OK);
   end;
 end;

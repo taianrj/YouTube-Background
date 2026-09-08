@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
 Push-Location $PSScriptRoot
 try {
-    node --test tests/core.test.cjs tests/content.test.cjs
+    node --test tests/core.test.cjs tests/content.test.cjs tests/installer-translations.test.cjs
     if ($LASTEXITCODE -ne 0) { throw 'Testes JavaScript falharam.' }
     dotnet run --project tests/ProtocolTests.csproj -c Release
     if ($LASTEXITCODE -ne 0) { throw 'Testes do protocolo falharam.' }

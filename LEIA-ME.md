@@ -1,10 +1,12 @@
-# YouTube Background 1.2 — Windows + Chrome
+# YouTube Background 1.2.3 — Windows + Chrome
 
 ## Instalação recomendada: executável
 
-Abra **YouTube-Background-Instalador-v1.2.0.exe** e avance pelo assistente. Não é preciso extrair um ZIP ou instalar o .NET. O instalador atualiza versões anteriores preservando os atalhos, registra o programa na lista de aplicativos do Windows e cria atalhos no menu Iniciar.
+Abra **YouTube-Background-Instalador-v1.2.3.exe** e avance pelo assistente. Não é preciso extrair um ZIP ou instalar o .NET. O instalador atualiza versões anteriores preservando os atalhos, registra o programa na lista de aplicativos do Windows e cria atalhos no menu Iniciar.
 
 Depois da cópia dos arquivos, o assistente apresenta duas etapas: **Conecte ao Chrome**, com as instruções para carregar a extensão e botões para abrir o Chrome e copiar o caminho; e **Escolha seus atalhos**, com um botão para abrir as configurações do aplicativo.
+
+O aplicativo, o instalador e o guia instalado usam o idioma de exibição do Windows: português, espanhol ou inglês. Para outros idiomas, usam inglês. A escolha é refeita em cada atualização, sem reutilizar o idioma anterior. As configurações, mensagens e a bandeja do aplicativo também são traduzidas; reinicie o aplicativo após mudar o idioma de exibição do Windows. O README do projeto apresenta inglês, português e espanhol, nessa ordem.
 
 A extensão continua sendo adicionada manualmente pelo usuário no Chrome. As etapas podem ser feitas durante o assistente ou depois, pelo atalho **YouTube Background - Guia de instalação** no menu Iniciar. Quem já tem a extensão carregada pode mantê-la.
 
@@ -31,6 +33,12 @@ Controle o vídeo do YouTube por atalhos, mesmo trabalhando em outro programa ou
 O aplicativo funciona em Windows 10/11 de 64 bits. O runtime .NET acompanha o pacote. O Chrome precisa permanecer aberto. Não é preciso ativar atalhos globais nas configurações da extensão: o aplicativo do Windows recebe as teclas.
 
 Este é um pacote de teste, sem assinatura digital ou publicação em loja. O Windows pode mostrar a origem como editor desconhecido. Em computadores administrados, políticas locais podem impedir scripts, aplicativos ou extensões de desenvolvedor.
+
+## Usar em janela anônima
+
+Use a extensão 1.0.1 ou posterior. Depois de atualizar os arquivos da extensão, clique em **Recarregar** em `chrome://extensions`. Abra **Detalhes** da extensão YouTube Background e ative **Permitir em modo anônimo**. Essa autorização precisa ser feita manualmente no Chrome. Recarregue as abas do YouTube abertas na janela anônima e inicie um vídeo.
+
+O último vídeo iniciado entre os que estão em reprodução nas janelas normais e anônimas recebe os atalhos, sem mudar o foco. O título do vídeo anônimo também pode aparecer no menu da bandeja do aplicativo; ele não é gravado em histórico. Desative **Permitir em modo anônimo** para retirar esse acesso.
 
 ## Usar e configurar
 
@@ -71,7 +79,7 @@ Se dois vídeos estiverem tocando, o iniciado mais recentemente recebe o comando
 - **Não funciona após atualização:** execute novamente o instalador a partir do novo pacote e clique em recarregar a extensão em `chrome://extensions`. Recarregue também as abas do YouTube.
 - **A extensão está em outro perfil:** carregue-a somente nos perfis que deseja controlar. Se instalada em vários perfis, o aplicativo considera o último vídeo iniciado entre as conexões ativas; cada conexão revalida seu próprio alvo.
 
-YouTube Music, modo anônimo, outros navegadores e vídeos incorporados em outros sites não fazem parte desta versão. A identificação do player e de anúncios depende da página do YouTube; alterações no site podem exigir uma atualização.
+YouTube Music, outros navegadores e vídeos incorporados em outros sites não fazem parte desta versão. A identificação do player e de anúncios depende da página do YouTube; alterações no site podem exigir uma atualização.
 
 ## Remover
 

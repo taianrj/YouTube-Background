@@ -8,5 +8,6 @@
     <Project Path="tests/Integration/Integration.csproj" />
     <Project Path="tests/Input/InputTests.csproj" />
     <Project Path="tests/Tray/TrayTests.csproj" />
+    <Project Path="tests/Localization/LocalizationTests.csproj" />
   </Folder>
 </Solution>

@@ -12,7 +12,7 @@ internal static class TrayTests
         using var app = new TrayApp();
         try {
             var tray = (NotifyIcon)typeof(TrayApp).GetField("tray", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(app)!;
-            var menu = tray.ContextMenuStrip!.Items.OfType<ToolStripMenuItem>().Single(i => i.Text == "Configurações…");
+            var menu = tray.ContextMenuStrip!.Items.OfType<ToolStripMenuItem>().Single(i => i.Text == Ui.Text("SettingsMenu"));
             menu.PerformClick(); Pump();
             var first = Window(); Check(first.Visible && first.ShowInTaskbar, "settings menu did not show a reachable window");
             Check(Screen.AllScreens.Any(s => s.WorkingArea.IntersectsWith(first.Bounds)), "settings outside screen");

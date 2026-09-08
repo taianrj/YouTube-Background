@@ -22,7 +22,7 @@ internal static class Program
 public sealed record Shortcut(uint Modifiers, int Key)
 {
     public override string ToString() => ((Modifiers & 2) != 0 ? "Ctrl + " : "") + ((Modifiers & 1) != 0 ? "Alt + " : "") + ((Modifiers & 4) != 0 ? "Shift + " : "") + ((Modifiers & 8) != 0 ? "Win + " : "") + (Key switch {
-        173 => "Silenciar", 174 => "Volume −", 175 => "Volume +", 176 => "Próxima faixa", 177 => "Faixa anterior", 178 => "Parar mídia", 179 => "Reproduzir / pausar", 37 => "←", 39 => "→", _ => ((Keys)Key).ToString()
+        173 => Ui.Text("Mute"), 174 => Ui.Text("VolumeDown"), 175 => Ui.Text("VolumeUp"), 176 => Ui.Text("NextTrack"), 177 => Ui.Text("PreviousTrack"), 178 => Ui.Text("StopMedia"), 179 => Ui.Text("PlayPause"), 37 => "←", 39 => "→", _ => ((Keys)Key).ToString()
     });
     public static bool IsModifier(int key) => key is 16 or 17 or 18 or 91 or 92 or >= 160 and <= 165;
     public bool IsMedia => Key is >= 173 and <= 179;
@@ -65,7 +65,7 @@ internal sealed class HotkeyWindow : NativeWindow, IDisposable
             if (window != IntPtr.Zero) { PostMessage(window, 0x8001, IntPtr.Zero, IntPtr.Zero); return; }
             Thread.Sleep(100);
         }
-        MessageBox.Show("O aplicativo ainda não está respondendo. Tente abrir Configurações novamente.", "YouTube Background");
+        MessageBox.Show(Ui.Text("AppNotResponding"), "YouTube Background");
     }
     private KeyboardHook? media;
     public event Action<int>? Pressed;
@@ -110,10 +110,10 @@ internal sealed class TrayApp : ApplicationContext
     private readonly HotkeyWindow keys = new();
     private readonly Control dispatcher = new();
     private readonly NotifyIcon tray;
-    private readonly ToolStripMenuItem status = new("Chrome desconectado") { Enabled = false };
-    private readonly ToolStripMenuItem title = new("Nenhum vídeo em reprodução") { Enabled = false };
-    private readonly ToolStripMenuItem lastResult = new("Aguardando comando") { Enabled = false };
-    private readonly ToolStripMenuItem pause = new("Suspender atalhos") { CheckOnClick = true };
+    private readonly ToolStripMenuItem status = new(Ui.Text("Disconnected")) { Enabled = false };
+    private readonly ToolStripMenuItem title = new(Ui.Text("NoVideo")) { Enabled = false };
+    private readonly ToolStripMenuItem lastResult = new(Ui.Text("WaitingCommand")) { Enabled = false };
+    private readonly ToolStripMenuItem pause = new(Ui.Text("Suspend")) { CheckOnClick = true };
     private readonly ConcurrentDictionary<Guid, Client> clients = new();
     private readonly CancellationTokenSource stop = new();
     private bool registered, closing;
@@ -122,11 +122,7 @@ internal sealed class TrayApp : ApplicationContext
     public TrayApp(bool openSettings = false)
     {
         _ = dispatcher.Handle;
-        var menu = new ContextMenuStrip();
-        menu.Items.AddRange([status, title, lastResult, new ToolStripSeparator()]);
-        menu.Items.Add("Configurações…", null, (_, _) => UI(Configure));
-        menu.Items.Add(pause);
-        menu.Items.Add("Sair", null, (_, _) => ExitThread());
+        var menu = CreateMenu(status, title, lastResult, pause, () => UI(Configure), ExitThread);
         tray = new NotifyIcon { Text = "YouTube Background", Icon = Brand.Icon, ContextMenuStrip = menu, Visible = true };
         tray.DoubleClick += (_, _) => UI(Configure);
         keys.SettingsRequested += () => UI(Configure);
@@ -140,6 +136,16 @@ internal sealed class TrayApp : ApplicationContext
         _ = AcceptClients();
         if (openSettings) UI(Configure);
     }
+    internal static ContextMenuStrip CreateMenu(ToolStripMenuItem status, ToolStripMenuItem title,
+        ToolStripMenuItem lastResult, ToolStripMenuItem pause, Action configure, Action exit)
+    {
+        var menu = new ContextMenuStrip();
+        menu.Items.AddRange([status, title, lastResult, new ToolStripSeparator()]);
+        menu.Items.Add(Ui.Text("SettingsMenu"), null, (_, _) => configure());
+        menu.Items.Add(pause);
+        menu.Items.Add(Ui.Text("Exit"), null, (_, _) => exit());
+        return menu;
+    }
     private void UI(Action action)
     {
         if (stop.IsCancellationRequested) return;
@@ -148,7 +154,7 @@ internal sealed class TrayApp : ApplicationContext
     private void Register()
     {
         registered = keys.Register(settings);
-        if (!registered) tray.ShowBalloonTip(6000, "Atalho indisponível", "Um dos atalhos está ocupado. Abra Configurações para escolher outra combinação.", ToolTipIcon.Warning);
+        if (!registered) tray.ShowBalloonTip(6000, Ui.Text("UnavailableTitle"), Ui.Text("UnavailableBody"), ToolTipIcon.Warning);
         UpdateStatus();
     }
     private (Client? client, JsonElement? target) Selected()
@@ -163,9 +169,9 @@ internal sealed class TrayApp : ApplicationContext
     }
     private void UpdateStatus()
     {
-        status.Text = settingsWindow is not null ? "Configurações abertas — atalhos suspensos" : pause.Checked ? "Atalhos suspensos" : !registered ? "Atalho ocupado — abra Configurações" : clients.IsEmpty ? "Chrome desconectado" : "Chrome conectado";
+        status.Text = settingsWindow is not null ? Ui.Text("SettingsOpen") : pause.Checked ? Ui.Text("Suspended") : !registered ? Ui.Text("Occupied") : clients.IsEmpty ? Ui.Text("Disconnected") : Ui.Text("Connected");
         var (_, selected) = Selected();
-        title.Text = selected is { } t ? t.GetProperty("title").GetString() : "Nenhum vídeo em reprodução";
+        title.Text = selected is { } t ? t.GetProperty("title").GetString() : Ui.Text("NoVideo");
     }
     private async void SendSeek(int delta)
     {
@@ -174,7 +180,7 @@ internal sealed class TrayApp : ApplicationContext
         if (!client.Sending.Wait(0)) return;
         var message = new { v = 1, type = "seek", id = Guid.NewGuid().ToString("N"), tabId = target.Value.GetProperty("tabId").GetInt32(), delta, expiresAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + 1500 };
         try { await client.Writer.WriteLineAsync(JsonSerializer.Serialize(message)); }
-        catch { lastResult.Text = "Conexão interrompida; comando descartado"; }
+        catch { lastResult.Text = Ui.Text("ConnectionLost"); }
         finally { client.Sending.Release(); }
     }
     private async Task AcceptClients()
@@ -206,7 +212,7 @@ internal sealed class TrayApp : ApplicationContext
                 } else if (Protocol.Valid(line, "result")) {
                     using var doc = JsonDocument.Parse(line);
                     var r = doc.RootElement;
-                    var text = r.GetProperty("ok").GetBoolean() ? "Último salto enviado ao vídeo" : r.TryGetProperty("reason", out var reason) ? reason.GetString() : "Comando não executado";
+                    var text = r.GetProperty("ok").GetBoolean() ? Ui.Text("SeekSent") : r.TryGetProperty("reason", out var reason) ? Ui.CommandFailure(reason.GetString()) : Ui.Text("NotExecuted");
                     UI(() => lastResult.Text = text);
                 } else break;
             }
@@ -227,9 +233,9 @@ internal sealed class TrayApp : ApplicationContext
                 form.Location = new(area.Left + Math.Max(0, (area.Width - form.Width) / 2), area.Top + Math.Max(0, (area.Height - form.Height) / 2));
                 form.SaveRequested = next => {
                     bool available = keys.Register(next); keys.Clear();
-                    if (!available) return "Atalho ocupado por outro aplicativo. Escolha uma combinação diferente.";
+                    if (!available) return Ui.Text("OccupiedSave");
                     try { next.Save(); settings = next; return null; }
-                    catch (Exception e) { return "Não foi possível salvar: " + e.Message; }
+                    catch (Exception e) { return Ui.Text("SaveFailed") + e.Message; }
                 };
                 form.FormClosed += (_, _) => {
                     settingsWindow = null;
@@ -247,7 +253,7 @@ internal sealed class TrayApp : ApplicationContext
             var failed = settingsWindow; settingsWindow = null; failed?.Dispose();
             if (!pause.Checked) Register();
             UpdateStatus();
-            MessageBox.Show("Não foi possível abrir Configurações.\n\n" + error.Message, "YouTube Background", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(Ui.Text("SettingsFailed") + error.Message, "YouTube Background", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
     protected override void ExitThreadCore()
@@ -267,48 +273,48 @@ internal sealed class SettingsForm : Form
     private readonly Label hint = new() { AutoSize = true, MaximumSize = new(540, 0) };
     private Button? activeButton;
     private bool recording;
-    private const string Help = "Clique em Gravar e pressione uma tecla, combinação ou gire o controle.\nSe o giro enviar Volume +/−, cada direção pode ser gravada separadamente.\nEnquanto esses atalhos estiverem ativos, eles substituem o controle de volume.";
+    private static string Help => Ui.Text("Help");
     public SettingsForm(Settings s)
     {
-        Text = "YouTube Background — Configurações";
+        Text = Ui.Text("SettingsTitle");
         Icon = Brand.Icon;
         AutoScaleMode = AutoScaleMode.Dpi; ClientSize = new(590, 345);
         FormBorderStyle = FormBorderStyle.FixedDialog; MaximizeBox = false; MinimizeBox = false; StartPosition = FormStartPosition.CenterScreen;
         var back = new TextBox { ReadOnly = true, Text = s.Back.ToString(), Tag = s.Back, Width = 220 };
         var forward = new TextBox { ReadOnly = true, Text = s.Forward.ToString(), Tag = s.Forward, Width = 220 };
         var seconds = new NumericUpDown { Minimum = 1, Maximum = 120, Value = s.Seconds, Width = 220 };
-        var startup = new CheckBox { Text = "Iniciar ao entrar no Windows", Checked = s.Startup, AutoSize = true };
+        var startup = new CheckBox { Text = Ui.Text("Startup"), Checked = s.Startup, AutoSize = true };
         var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(16), ColumnCount = 2, RowCount = 6 };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30)); layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70));
         void Row(string label, Control c) { layout.Controls.Add(new Label { Text = label, AutoSize = true, Padding = new Padding(0, 6, 0, 0) }); layout.Controls.Add(c); }
         Control CaptureRow(TextBox box) {
             var panel = new FlowLayoutPanel { AutoSize = true, WrapContents = false };
-            var button = new Button { Text = "Gravar", AutoSize = true };
-            button.Click += (_, _) => { if (recording && activeButton == button) StopRecording("Gravação cancelada. " + Help); else StartRecording(box, button); };
+            var button = new Button { Text = Ui.Text("Record"), AutoSize = true };
+            button.Click += (_, _) => { if (recording && activeButton == button) StopRecording(Ui.Text("CancelledInline") + Help); else StartRecording(box, button); };
             panel.Controls.Add(box); panel.Controls.Add(button); return panel;
         }
-        Row("Retroceder", CaptureRow(back)); Row("Avançar", CaptureRow(forward)); Row("Segundos por salto", seconds); Row("Inicialização", startup);
+        Row(Ui.Text("Back"), CaptureRow(back)); Row(Ui.Text("Forward"), CaptureRow(forward)); Row(Ui.Text("Seconds"), seconds); Row(Ui.Text("StartupLabel"), startup);
         hint.Text = Help;
         layout.Controls.Add(hint); layout.SetColumnSpan(hint, 2);
-        var save = new Button { Text = "Salvar", AutoSize = true };
+        var save = new Button { Text = Ui.Text("Save"), AutoSize = true };
         save.Click += (_, _) => {
             StopRecording(Help);
             var next = new Settings((Shortcut)back.Tag!, (Shortcut)forward.Tag!, (int)seconds.Value, startup.Checked);
-            if (!next.Back.Valid || !next.Forward.Valid || next.Back == next.Forward) { MessageBox.Show(this, "Escolha dois atalhos válidos e diferentes."); return; }
+            if (!next.Back.Valid || !next.Forward.Valid || next.Back == next.Forward) { MessageBox.Show(this, Ui.Text("DifferentHotkeys")); return; }
             var error = SaveRequested?.Invoke(next);
-            if (error is null) Close(); else MessageBox.Show(this, error, "Configurações", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            if (error is null) Close(); else MessageBox.Show(this, error, Ui.Text("Settings"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
         };
         layout.Controls.Add(save); Controls.Add(layout);
-        timeout.Tick += (_, _) => StopRecording("Nenhuma tecla detectada. O controle pode precisar de configuração no software do teclado.\n" + Help);
-        Deactivate += (_, _) => { if (recording) StopRecording("Gravação cancelada ao trocar de janela.\n" + Help); };
+        timeout.Tick += (_, _) => StopRecording(Ui.Text("Timeout") + Help);
+        Deactivate += (_, _) => { if (recording) StopRecording(Ui.Text("Deactivated") + Help); };
     }
     private void StartRecording(TextBox box, Button button)
     {
         StopRecording(Help);
         try { recorder ??= new KeyboardHook(); }
-        catch (Exception e) { hint.Text = "Não foi possível iniciar a captura: " + e.Message; return; }
-        recording = true; activeButton = button; button.Text = "Cancelar";
-        hint.Text = "Aguardando… pressione o atalho ou gire o controle uma vez.\nEsc cancela. A gravação termina automaticamente após 15 segundos.";
+        catch (Exception e) { hint.Text = Ui.Text("CaptureFailed") + e.Message; return; }
+        recording = true; activeButton = button; button.Text = Ui.Text("Cancel");
+        hint.Text = Ui.Text("Recording");
         recorder.OnKey = shortcut => {
             if (!recording) return false;
             if (!shortcut.Valid) return false;
@@ -316,12 +322,12 @@ internal sealed class SettingsForm : Form
             bool cancel = shortcut.Key == 27 && shortcut.Modifiers == 0;
             BeginInvoke(() => {
                 if (!cancel) { box.Tag = shortcut; box.Text = shortcut.ToString(); }
-                StopRecording(cancel ? "Gravação cancelada.\n" + Help : "Detectado: " + shortcut + ". Clique em Salvar para aplicar.\n" + Help);
+                StopRecording(cancel ? Ui.Text("Cancelled") + Help : Ui.Format("Detected", shortcut) + Help);
             });
             return true;
         };
         timeout.Start();
     }
-    private void StopRecording(string message) { recording = false; timeout.Stop(); if (recorder is not null) recorder.OnKey = null; if (activeButton is not null) activeButton.Text = "Gravar"; activeButton = null; hint.Text = message; }
+    private void StopRecording(string message) { recording = false; timeout.Stop(); if (recorder is not null) recorder.OnKey = null; if (activeButton is not null) activeButton.Text = Ui.Text("Record"); activeButton = null; hint.Text = message; }
     protected override void Dispose(bool disposing) { if (disposing) { recorder?.Dispose(); timeout.Dispose(); } base.Dispose(disposing); }
 }

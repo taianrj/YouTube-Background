@@ -9,7 +9,7 @@ try {
     $visible = $false
     for ($attempt = 0; $attempt -lt 50; $attempt++) {
         $ownedProcess.Refresh()
-        if ($ownedProcess.MainWindowTitle -like '*Configura*') { $visible = $true; break }
+        if ($ownedProcess.MainWindowTitle -match '^YouTube Background — (Configurações|Settings|Ajustes)$') { $visible = $true; break }
         Start-Sleep -Milliseconds 100
     }
     if (-not $visible) { throw 'A primeira janela ficou oculta apos inicializacao SW_HIDE.' }

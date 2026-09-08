@@ -4,4 +4,5 @@
   <ItemGroup><Compile Remove="Integration/**/*.cs" /></ItemGroup>
   <ItemGroup><Compile Remove="Input/**/*.cs" /></ItemGroup>
   <ItemGroup><Compile Remove="Tray/**/*.cs" /></ItemGroup>
+  <ItemGroup><Compile Remove="Localization/**/*.cs" /></ItemGroup>
 </Project>

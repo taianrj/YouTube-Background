@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YouTube Background — Ponte para Windows",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Conecta o YouTube ao aplicativo de atalhos globais do Windows.",
   "minimum_chrome_version": "120",
   "permissions": [
@@ -26,6 +26,6 @@
       "run_at": "document_idle"
     }
   ],
-  "incognito": "not_allowed",
+  "incognito": "spanning",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA6CNmCE9Uqg3K/6rWzzb9QMh7Hpi2CrYhoItaUUNfvj6xL1tWjNIS9FjxysULWya5HBeoL4TsgokAiF1lGDt31w5buG+DwDAPcRlCWnrwaUqqEiWo+WVR3HHC5RRHGGZ++Ty10bQOSY008u0qBz4YlPyZ1fedYvzMi0xa0ptSqV199ABioPb//ghk93zOZtDCN6QiBdBsT1PBLqeQgYLgZjN6RRgkaCfJxRoH8T0oUr8VMMH2+sCLPG2iGXnrNKsora0vuHX9TuP0kYHWoo4UL4VMnxrck959cU2BB/2Kp71MdBK+WiutPd/02+5JqKH2avKGKzoKSUXnTrH5AzYMDQIDAQAB"
 }

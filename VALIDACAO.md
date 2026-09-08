@@ -1,4 +1,38 @@
-# Validação da versão 1.2.0
+# Validação do YouTube Background
+
+## Aplicativo e instalador 1.2.3 — interface traduzida (07/09/2026)
+
+- Configurações, instruções de gravação, avisos, teclas multimídia e bandeja em inglês, português e espanhol. Seleção por `CurrentUICulture`, usando idioma primário `pt`/`es` e inglês para os demais. Nenhuma preferência de idioma foi adicionada; motivos conhecidos da extensão são traduzidos na apresentação, sem mudar o protocolo ou a extensão 1.0.1.
+- `dotnet run --project tests/Localization/LocalizationTests.csproj -- work/localization`: 264 verificações passaram, cobrindo variantes regionais, fallback, mensagens, argumentos, nomes das teclas, erros da extensão, preferências serializadas invariantes e layout das configurações. A fábrica do menu usada pela bandeja foi testada com callbacks isolados, incluindo Configurações, suspensão e Sair.
+- Formulários e menus de teste invisíveis foram renderizados em `work/localization/`; capturas representativas das configurações e dos menus nos três idiomas foram inspecionadas, sem cortes observados. Os testes não ativam hooks, não escrevem preferências e não conectam ao host. As mensagens de gravação foram exercitadas como estados visuais, sem captura de teclado físico.
+- `build.ps1` passou: 12 testes JavaScript (incluindo traduções do instalador), 12 verificações de protocolo e publicação autocontida em `package/`. Guias, README, AGENTS.md e versão do instalador sincronizados com 1.2.3. Testes antigos que localizavam botões pelo texto em português foram adaptados.
+- Inno Setup 6.7.3 gerou `dist/YouTube-Background-Instalador-v1.2.3.exe`; versão do instalador e do aplicativo publicado conferidas e SHA-256 salvo em `dist/`. `git diff --check` passou.
+- Aplicativo instalado encontrado em execução; não foi interrompido. O fluxo completo do ícone da bandeja, testes de captura, inicialização oculta e instalação/remoção não foram repetidos nesta alteração. A lógica de foco, registro dos atalhos e persistência foi preservada. Não houve alteração de visibilidade nem publicação de Release no GitHub.
+
+## Instalador 1.2.2 — idiomas (07/09/2026)
+
+- Instalador e aplicativo versionados como 1.2.2; extensão permanece em 1.0.1. README em inglês, português e espanhol; guias HTML e mensagens do instalador nos três idiomas. A interface do aplicativo Windows continua em português.
+- `build.ps1` passou: 11 testes de lógica JavaScript, 1 teste de completude das traduções (incluindo referências e argumentos) e 12 verificações do protocolo. Aplicativo e host publicados em `package/`.
+- Inno Setup 6.7.3 compilou `dist/YouTube-Background-Instalador-v1.2.2.exe`, incluindo os três guias e o manifest atualizado. Versões dos executáveis e hash SHA-256 do instalador conferidos.
+- Revisão visual de boas-vindas, página Chrome e página de atalhos nos três idiomas: textos e botões legíveis, sem cortes observados. Foi usada uma prévia gerada em `work/` a partir do script, com páginas antecipadas, caminho de teste por `{localappdata}`, arquivos de instalação omitidos e avanço da página de instalação bloqueado. Essa prévia não instala o programa; não equivale a uma instalação completa do executável de distribuição.
+- Português escolhido automaticamente no Windows pt-BR; inglês e espanhol selecionados por `/LANG=english` e `/LANG=spanish` na prévia. Idiomas regionais e fallback para inglês seguem a detecção nativa documentada do Inno Setup: correspondência completa, depois idioma primário, depois primeira entrada. Configuração: `LanguageDetectionMethod=uilanguage`, inglês primeiro, `ShowLanguageDialog=no`, `UsePreviousLanguage=no`. Não foi alterado o idioma do Windows para testar outras localidades.
+- Referências locais do README e `git diff --check` conferidos. Não houve instalação/remoção desta versão, alteração de visibilidade no GitHub ou publicação de Release. Validação de modo anônimo com vídeo real e de teclado físico continua pendente.
+
+## Instalador 1.2.1 (07/09/2026)
+
+- Aplicativo atualizado para 1.2.1, extensão mantida em 1.0.1. Documentação e versão do instalador sincronizadas; assistente orienta recarregar a extensão e autorizar o modo anônimo.
+- `build.ps1` passou: 11 testes JavaScript, 12 verificações de protocolo e publicação autocontida em `package/`. Versão do executável publicado conferida: 1.2.1.0.
+- Instalador gerado com Inno Setup 6.7.3 em `dist/YouTube-Background-Instalador-v1.2.1.exe`. Compilador preparado em modo portátil a partir do download oficial, com assinatura válida de Pyrsys B.V. O instalador do aplicativo continua sem assinatura digital própria.
+- Compilação confirmou inclusão dos quatro arquivos da extensão, executáveis, ícone, guia atualizado e script de encerramento. `git diff --check` passou.
+- Não foi executada instalação/remoção nem validação visual do assistente 1.2.1 nesta entrega. Os testes históricos abaixo não equivalem a uma nova validação de atualização. O teste em janela anônima com YouTube real permanece pendente.
+
+## Extensão 1.0.1 — acesso opcional ao modo anônimo (07/09/2026)
+
+- Manifest alterado de `not_allowed` para `spanning`, preservando a chave pública, o ID e as permissões. Guias atualizados para a autorização manual no Chrome e a seleção compartilhada entre janelas normais e anônimas.
+- `build.ps1`: 11 testes JavaScript e 12 verificações de protocolo passaram; executáveis e extensão publicados em `package/`. Aplicativo e instalador permanecem na versão 1.2.0; nenhum novo instalador foi gerado.
+- `node tests/browser-smoke.cjs work/browser-incognito-change-retry`: passou no Chrome 152.0.7977.77, em perfil isolado normal, com mídia simulada em página interceptada. Verificou ID da extensão, saltos a partir de outra aba, rejeição em pausa/anúncio e remoção de aba fechada.
+- A primeira tentativa de build falhou por acesso ao SDK e a primeira tentativa de navegador falhou no processo de GPU sob restrição do ambiente; ambas passaram após execução com a permissão necessária.
+- Não foi realizado teste em janela anônima, com YouTube real ou com teclado físico nesta alteração. A autorização manual e o fluxo completo em janela anônima ainda precisam de validação. A instalação existente do usuário não foi modificada.
 
 ## Instalador executável e identidade visual
 

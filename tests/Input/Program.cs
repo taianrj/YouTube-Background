@@ -51,7 +51,7 @@ internal static class InputTests
             form.StartPosition = FormStartPosition.Manual; form.Location = new(-30000, -30000);
             form.Show(); Pump(); form.PerformLayout();
             IEnumerable<Control> Descendants(Control root) { foreach (Control child in root.Controls) { yield return child; foreach (var nested in Descendants(child)) yield return nested; } }
-            var recordButtons = Descendants(form).OfType<Button>().Where(b => b.Text == "Gravar").ToArray();
+            var recordButtons = Descendants(form).OfType<Button>().Where(b => b.Text == Ui.Text("Record")).ToArray();
             var boxes = Descendants(form).OfType<TextBox>().ToArray();
             Check(recordButtons.Length == 2, "two recording buttons");
             recordButtons[0].PerformClick(); Key(174); Key(174, true);

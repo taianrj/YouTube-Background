@@ -10,8 +10,15 @@ Projeto iniciado em 06/09/2026 a pedido de Taian para permitir que um amigo cont
 - **1.1:** botões Gravar e eventos de volume/multimídia, incluindo sinais enviados por controles giratórios compatíveis.
 - **1.1.1:** correção da primeira janela oculta por `SW_HIDE`, abertura pelo menu Iniciar, recuperação da janela existente e espera pelo encerramento durante atualização.
 - **1.2.0:** ícone próprio vermelho com setas e instalador Inno Setup com etapas para Chrome e atalhos; atualização local testada preservando preferências.
+- **1.2.1:** distribuição com extensão 1.0.1, acesso opcional ao modo anônimo e orientação de recarga/autorização no instalador e nos guias.
+- **1.2.2:** instalador e guia em inglês, português e espanhol, escolhidos pelo idioma de exibição do Windows (inglês para os demais). README nos três idiomas, inglês primeiro. Aplicativo Windows permanece em português; extensão permanece em 1.0.1.
+- **1.2.3:** configurações, bandeja, mensagens e teclas multimídia traduzidas para os mesmos três idiomas. Seleção por `CurrentUICulture`, incluindo variantes regionais e inglês como fallback; não muda preferências. Guias e assistente atualizados com os nomes reais dos botões. Extensão permanece em 1.0.1.
 
 ## Decisões preservadas
+
+Extensão 1.0.1: modo anônimo habilitável pelo usuário com `incognito: spanning`, compartilhando a seleção de alvo e a conexão nativa com as janelas normais. A autorização **Permitir em modo anônimo** é manual no Chrome. O aplicativo e o instalador 1.2.3 distribuem essa extensão. Consulte `VALIDACAO.md` para o escopo dos testes.
+
+Em 07/09/2026, o usuário manifestou intenção de disponibilizar o projeto publicamente, mas escolheu apenas preparar os arquivos nesta tarefa. Não alterar visibilidade nem publicar Release sem novo pedido. O README é trilíngue; manter conteúdo equivalente e versões sincronizadas. Traduções do instalador ficam em `setup/messages/`; inglês deve ser a primeira entrada, com detecção por `uilanguage`, sem diálogo de seleção nem reutilização do idioma anterior.
 
 1. Aplicativo na sessão do usuário com bandeja, e não serviço do Windows. O instalador não exige administrador.
 2. Chrome usa extensão Manifest V3 e Native Messaging. O host usa named pipe por usuário e sessão; não abre porta TCP.
